@@ -10,8 +10,12 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000/api',
+        url: 'http://localhost:8080/api',
         description: 'Development server',
+      },
+      {
+        url: 'https://productcar-g0hshwf2eufwfwaz.canadacentral-01.azurewebsites.net/api',
+        description: 'Production server',
       },
     ],
     components: {

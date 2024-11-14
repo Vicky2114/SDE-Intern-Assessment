@@ -1,13 +1,12 @@
 const express = require("express");
-const {
-  createCar,
-  getProductById,
-  listProducts,
-  updateProduct,
-  deleteProduct
-} = require("../controllers/product_controller"); // Import the createCar controller
+const { product_controller } = require("../controllers"); // Import the createCar controller
 const { upload, errorHandler } = require("../config/multer"); // Multer upload configuration
-const { authenticateToken } = require("../middleware/authMiddleware"); // JWT Auth Middleware
+
+const {
+  productValidationMiddleware,
+  authMiddleware,
+} = require("../middleware"); // JWT Auth Middleware
+
 const router = express.Router();
 
 /**
@@ -123,9 +122,10 @@ const router = express.Router();
 
 router.post(
   "/createProduct",
-  authenticateToken,
+  authMiddleware.authenticateToken,
   upload.array("images", 10),
-  createCar,
+  productValidationMiddleware.validateProduct,
+  product_controller.createCar,
   errorHandler
 );
 
@@ -134,14 +134,27 @@ router.post(
  * /product/list:
  *   get:
  *     summary: List all products
- *     description: Retrieve all car products in the database.
+ *     description: Retrieve all car products in the database with pagination support.
  *     tags:
  *       - Product
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: The page number to retrieve (default is 1).
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: The number of products to retrieve per page (default is 10).
  *     responses:
  *       200:
- *         description: List of all products
+ *         description: List of products with pagination info
  *         content:
  *           application/json:
  *             schema:
@@ -166,6 +179,21 @@ router.post(
  *                         items:
  *                           type: string
  *                         example: ["electric", "luxury", "Tesla", "autopilot"]
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *                     totalDocs:
+ *                       type: integer
+ *                       example: 100
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 10
  *       500:
  *         description: Server error
  *         content:
@@ -177,7 +205,11 @@ router.post(
  *                   type: string
  *                   example: "Error fetching products"
  */
-router.get("/list", authenticateToken, listProducts); // List all products
+router.get(
+  "/list",
+  authMiddleware.authenticateToken,
+  product_controller.listProducts
+); // List all products
 
 /**
  * @swagger
@@ -243,7 +275,11 @@ router.get("/list", authenticateToken, listProducts); // List all products
  *                   type: string
  *                   example: "Error fetching the product"
  */
-router.get("/:productId", authenticateToken, getProductById); // Get a particular product by ID
+router.get(
+  "/:productId",
+  authMiddleware.authenticateToken,
+  product_controller.getProductById
+); // Get a particular product by ID
 
 /**
  * @swagger
@@ -305,7 +341,12 @@ router.get("/:productId", authenticateToken, getProductById); // Get a particula
  *                   type: string
  *                   example: "Error updating the product"
  */
-router.put('/:productId', authenticateToken, updateProduct);  // Update product by ID
+router.put(
+  "/:productId",
+  productValidationMiddleware.validateProduct,
+  authMiddleware.authenticateToken,
+  product_controller.updateProduct
+); // Update product by ID
 
 /**
  * @swagger
@@ -349,6 +390,10 @@ router.put('/:productId', authenticateToken, updateProduct);  // Update product 
  *                   type: string
  *                   example: "Error deleting the product"
  */
-router.delete('/:productId', authenticateToken, deleteProduct);  // Delete product by ID
+router.delete(
+  "/:productId",
+  authMiddleware.authenticateToken,
+  product_controller.deleteProduct
+); // Delete product by ID
 
 module.exports = router;

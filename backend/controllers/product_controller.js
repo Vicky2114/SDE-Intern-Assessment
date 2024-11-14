@@ -37,15 +37,36 @@ const createCar = async (req, res) => {
   }
 };
 
-// Additional controller methods (e.g., view, edit, delete, etc.) can go here
 const listProducts = async (req, res) => {
   try {
-    const products = await Car.find({ userId: req.user.id });
-    res.status(200).json({ products });
+    const { page = 1, limit = 10 } = req.query; 
+    const userId = req.user.id;
+
+
+    const parsedPage = Math.max(1, parseInt(page, 10));
+    const parsedLimit = Math.max(1, parseInt(limit, 10));
+
+    // Fetch the paginated results and total document count
+    const products = await Car.find({ userId })
+      .skip((parsedPage - 1) * parsedLimit)
+      .limit(parsedLimit);
+
+    const totalDocs = await Car.countDocuments({ userId });
+
+    res.status(200).json({
+      products,
+      pagination: {
+        page: parsedPage,
+        limit: parsedLimit,
+        totalDocs,
+        totalPages: Math.ceil(totalDocs / parsedLimit),
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching products" });
+    res.status(500).json({ message: "Error fetching products", error: error.message });
   }
 };
+
 
 const getProductById = async (req, res) => {
   try {
@@ -110,5 +131,5 @@ module.exports = {
   listProducts,
   getProductById,
   deleteProduct,
-  updateProduct
+  updateProduct,
 };

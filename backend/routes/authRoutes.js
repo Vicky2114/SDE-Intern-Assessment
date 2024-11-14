@@ -1,10 +1,9 @@
 const express = require("express");
-const { registerUser, loginUser } = require("../controllers/auth_controller");
-const { authenticateToken } = require("../middleware/authMiddleware");
+const { auth_controller} = require("../controllers");
 const {
-  validateRegister,
-  validateLogin,
-} = require("../middleware/validationMiddleware");
+  authMiddleware,
+  validationMiddleware,
+} = require("../middleware");
 const router = express.Router();
 
 /**
@@ -44,7 +43,7 @@ const router = express.Router();
  *       409:
  *         description: Email already exists
  */
-router.post("/register", validateRegister, registerUser);
+router.post("/register", validationMiddleware.validateRegister, auth_controller.registerUser);
 
 /**
  * @swagger
@@ -71,7 +70,7 @@ router.post("/register", validateRegister, registerUser);
  *       401:
  *         description: Invalid credentials
  */
-router.post("/login", validateLogin, loginUser);
+router.post("/login", validationMiddleware.validateLogin, auth_controller.loginUser);
 
 /**
  * @swagger
@@ -87,7 +86,7 @@ router.post("/login", validateLogin, loginUser);
  *       401:
  *         description: Unauthorized
  */
-router.get("/protected", authenticateToken, (req, res) => {
+router.get("/protected", authMiddleware.authenticateToken, (req, res) => {
   res.send(`Welcome ${req.user.name}, this is a protected route.`);
 });
 
